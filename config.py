@@ -54,6 +54,9 @@ SPOTIFY_CLIENT_ID = getenv("SPOTIFY_CLIENT_ID", None)
 SPOTIFY_CLIENT_SECRET = getenv("SPOTIFY_CLIENT_SECRET", None)
 
 
+# Set this to True if you want the bot restarts automatically at 03:30 AM at morning.
+AUTO_RESTART = bool(getenv("AUTO_RESTART", True))
+
 # Maximum limit for fetching playlist's track from youtube, spotify, apple links.
 PLAYLIST_FETCH_LIMIT = int(getenv("PLAYLIST_FETCH_LIMIT", 25))
 

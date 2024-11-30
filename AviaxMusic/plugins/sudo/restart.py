@@ -20,7 +20,7 @@ from AviaxMusic.utils.database import (
     remove_active_video_chat,
 )
 from AviaxMusic.utils.decorators.language import language
-from AviaxMusic.utils.pastebin import InflexBin
+from AviaxMusic.utils.pastebin import AviaxBin
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

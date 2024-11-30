@@ -2,6 +2,7 @@ import asyncio
 import os
 import shutil
 import socket
+import logging
 from datetime import datetime
 
 import urllib3
@@ -10,6 +11,7 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 from pyrogram import filters
 
 import config
+from config import OWNER_ID, AUTO_RESTART
 from AviaxMusic import app
 from AviaxMusic.misc import HAPP, SUDOERS, XCB
 from AviaxMusic.utils.database import (
@@ -18,16 +20,32 @@ from AviaxMusic.utils.database import (
     remove_active_video_chat,
 )
 from AviaxMusic.utils.decorators.language import language
-from AviaxMusic.utils.pastebin import AviaxBin
+from AviaxMusic.utils.pastebin import InflexBin
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 async def is_heroku():
     return "heroku" in socket.getfqdn()
 
+async def auto_restart():
+    logging.info("Starting auto_restart Coroutine.")
+    while AUTO_RESTART:
+        logging.info("Waiting For 24 Hours Before Restarting.")
+        await asyncio.sleep(86400)  # Wait for 24 hours (86400 seconds)
 
-@app.on_message(filters.command(["getlog", "logs", "getlogs"]) & SUDOERS)
+        shutil.rmtree("downloads", ignore_errors=True)
+        shutil.rmtree("raw_files", ignore_errors=True)
+        shutil.rmtree("cache", ignore_errors=True)
+        logging.info("Deleted Temporary Files And Directories.")
+
+        logging.info("Restart process started.")
+        os.system(f"kill -9 {os.getpid()} && ulimit -n 16384 && python3 -m AviaxMusic")
+        logging.info("Bot restarted.")
+
+@app.on_message(filters.command(["getlog", "logs", "getlogs"]) & filters.user(OWNER_ID))
 @language
 async def log_(client, message, _):
     try:
@@ -35,8 +53,7 @@ async def log_(client, message, _):
     except:
         await message.reply_text(_["server_1"])
 
-
-@app.on_message(filters.command(["update", "gitpull"]) & SUDOERS)
+@app.on_message(filters.command(["update", "gitpull"]) & filters.user(OWNER_ID))
 @language
 async def update_(client, message, _):
     if await is_heroku():
@@ -64,13 +81,13 @@ async def update_(client, message, _):
         "tsnrhtdd"[(format // 10 % 10 != 1) * (format % 10 < 4) * format % 10 :: 4],
     )
     for info in repo.iter_commits(f"HEAD..origin/{config.UPSTREAM_BRANCH}"):
-        updates += f"<b>➣ #{info.count()}: <a href={REPO_}/commit/{info}>{info.summary}</a> ʙʏ -> {info.author}</b>\n\t\t\t\t<b>➥ ᴄᴏᴍᴍɪᴛᴇᴅ ᴏɴ :</b> {ordinal(int(datetime.fromtimestamp(info.committed_date).strftime('%d')))} {datetime.fromtimestamp(info.committed_date).strftime('%b')}, {datetime.fromtimestamp(info.committed_date).strftime('%Y')}\n\n"
-    _update_response_ = "<b>ᴀ ɴᴇᴡ ᴜᴩᴅᴀᴛᴇ ɪs ᴀᴠᴀɪʟᴀʙʟᴇ ғᴏʀ ᴛʜᴇ ʙᴏᴛ !</b>\n\n➣ ᴩᴜsʜɪɴɢ ᴜᴩᴅᴀᴛᴇs ɴᴏᴡ\n\n<b><u>ᴜᴩᴅᴀᴛᴇs:</u></b>\n\n"
+        updates += f"<b>➣ #{info.count()}: <a href={REPO_}/commit/{info}>{info.summary}</a> 𝖡𝗒 -> {info.author}</b>\n\t\t\t\t<b>➥ 𝖢𝗈𝗆𝗆𝗂𝗍𝗍𝖾𝖽 𝖮𝗇 :</b> {ordinal(int(datetime.fromtimestamp(info.committed_date).strftime('%d')))} {datetime.fromtimestamp(info.committed_date).strftime('%b')}, {datetime.fromtimestamp(info.committed_date).strftime('%Y')}\n\n"
+    _update_response_ = "<b>𝖠 𝖭𝖾𝗐 𝖴𝗉𝖽𝖺𝗍𝖾 𝖨𝗌 𝖠𝗏𝖺𝗂𝗅𝖺𝖻𝗅𝖾 𝖥𝗈𝗋 𝖳𝗁𝖾 𝖡𝗈𝗍 !</b>\n\n➣ 𝖯𝗎𝗌𝗁𝗂𝗇𝗀 𝖴𝗉𝖽𝖺𝗍𝖾𝗌 𝖭𝗈𝗐\n\n<b><u>𝖴𝗉𝖽𝖺𝗍𝖾𝗌 :</u></b>\n\n"
     _final_updates_ = _update_response_ + updates
     if len(_final_updates_) > 4096:
-        url = await AviaxBin(updates)
+        url = await InflexBin(updates)
         nrs = await response.edit(
-            f"<b>ᴀ ɴᴇᴡ ᴜᴩᴅᴀᴛᴇ ɪs ᴀᴠᴀɪʟᴀʙʟᴇ ғᴏʀ ᴛʜᴇ ʙᴏᴛ !</b>\n\n➣ ᴩᴜsʜɪɴɢ ᴜᴩᴅᴀᴛᴇs ɴᴏᴡ\n\n<u><b>ᴜᴩᴅᴀᴛᴇs :</b></u>\n\n<a href={url}>ᴄʜᴇᴄᴋ ᴜᴩᴅᴀᴛᴇs</a>"
+            f"<b>𝖠 𝖭𝖾𝗐 𝖴𝗉𝖽𝖺𝗍𝖾 𝖨𝗌 𝖠𝗏𝖺𝗂𝗅𝖺𝖻𝗅𝖾 𝖥𝗈𝗋 𝖳𝗁𝖾 𝖡𝗈𝗍 !</b>\n\n➣ 𝖯𝗎𝗌𝗁𝗂𝗇𝗀 𝖴𝗉𝖽𝖺𝗍𝖾𝗌 𝖭𝗈𝗐\n\n<u><b>𝖴𝗉𝖽𝖺𝗍𝖾𝗌 :</b></u>\n\n<a href={url}>𝖢𝗁𝖾𝖼𝗄 𝖴𝗉𝖽𝖺𝗍𝖾𝗌</a>"
         )
     else:
         nrs = await response.edit(_final_updates_, disable_web_page_preview=True)
@@ -106,19 +123,18 @@ async def update_(client, message, _):
             )
     else:
         os.system("pip3 install -r requirements.txt")
-        os.system(f"kill -9 {os.getpid()} && bash start")
+        os.system(f"kill -9 {os.getpid()} && ulimit -n 16384 && bash start")
         exit()
 
-
 @app.on_message(filters.command(["restart"]) & SUDOERS)
-async def restart_(_, message):
-    response = await message.reply_text("ʀᴇsᴛᴀʀᴛɪɴɢ...")
+async def restart_(client, message):
+    response = await message.reply_text("Restarting...")
     ac_chats = await get_active_chats()
     for x in ac_chats:
         try:
             await app.send_message(
                 chat_id=int(x),
-                text=f"{app.mention} ɪs ʀᴇsᴛᴀʀᴛɪɴɢ...\n\nʏᴏᴜ ᴄᴀɴ sᴛᴀʀᴛ ᴩʟᴀʏɪɴɢ ᴀɢᴀɪɴ ᴀғᴛᴇʀ 15-20 sᴇᴄᴏɴᴅs.",
+                text=f"{app.mention} 𝖨𝗌 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝗂𝗇𝗀 ...\n\n𝖸𝗈𝗎 𝖢𝖺𝗇 𝖲𝗍𝖺𝗋𝗍 𝖯𝗅𝖺𝗒𝗂𝗇𝗀 𝖠𝖿𝗍𝖾𝗋 15 - 20 𝖲𝖾𝖼𝗈𝗇𝖽𝗌 .",
             )
             await remove_active_chat(x)
             await remove_active_video_chat(x)
@@ -132,6 +148,13 @@ async def restart_(_, message):
     except:
         pass
     await response.edit_text(
-        "» ʀᴇsᴛᴀʀᴛ ᴘʀᴏᴄᴇss sᴛᴀʀᴛᴇᴅ, ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ ғᴏʀ ғᴇᴡ sᴇᴄᴏɴᴅs ᴜɴᴛɪʟ ᴛʜᴇ ʙᴏᴛ sᴛᴀʀᴛs..."
+        "» 𝖱𝖾𝗌𝗍𝖺𝗋𝗍 𝖯𝗋𝗈𝖼𝖾𝗌𝗌 𝖲𝗍𝖺𝗋𝗍𝖾𝖽 , 𝖯𝗅𝖾𝖺𝗌𝖾 𝖶𝖺𝗂𝗍 𝖥𝗈𝗋 𝖥𝖾𝗐 𝖲𝖾𝖼𝗈𝗇𝖽𝗌 𝖴𝗇𝗍𝗂𝗅 𝖳𝗁𝖾 𝖡𝗈𝗍 𝖲𝗍𝖺𝗋𝗍𝗌 ...."
     )
-    os.system(f"kill -9 {os.getpid()} && bash start")
+    logging.info("Restart process initiated.")
+    os.system(f"kill -9 {os.getpid()} && ulimit -n 16384 && python3 -m AviaxMusic")
+
+# Schedule auto restart if enabled
+if AUTO_RESTART:
+    loop = asyncio.get_event_loop()
+    loop.create_task(auto_restart())
+    logging.info("Auto-restart Task Scheduled.")
